@@ -43,9 +43,15 @@
   --chart-3: 24 95% 53%;
   --chart-4: 142 71% 45%;
   --chart-5: 262 83% 58%;
-  --font-sans: Open Sans, sans-serif;
+  --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
+  --font-mono: 'Courier New', monospace;
+  --purple: 239 84% 67%;
+  --purple-foreground: 0 0% 100%;
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
   --radius: .5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(220 13% 13% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(220 13% 13% / 0.00);
