@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
@@ -24,23 +25,32 @@ declare module "http" {
 
 // Session setup
 const PgSession = connectPgSimple(session);
-app.use(
-  session({
-    store: new PgSession({
-      pool: pool,
-      tableName: "user_sessions",
-      createTableIfMissing: true,
+const sessionOptions: session.SessionOptions = {
+  secret: process.env.SESSION_SECRET || "student-hub-secret-key-dev",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  },
+};
+
+if (pool) {
+  app.use(
+    session({
+      ...sessionOptions,
+      store: new PgSession({
+        pool: pool,
+        tableName: "user_sessions",
+        createTableIfMissing: true,
+      }),
     }),
-    secret: process.env.SESSION_SECRET || "student-hub-secret-key-dev",
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    },
-  })
-);
+  );
+} else {
+  console.warn('No database pool available; using MemoryStore for sessions (development only).');
+  app.use(session(sessionOptions));
+}
 
 app.use(
   express.json({
@@ -115,14 +125,18 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  const listenOptions: any = {
+    port,
+    host: "0.0.0.0",
+  };
+
+  // `reusePort` (SO_REUSEPORT) is not supported on Windows and can cause
+  // `ENOTSUP` errors. Only set it on non-Windows platforms.
+  if (process.platform !== "win32") {
+    listenOptions.reusePort = true;
+  }
+
+  httpServer.listen(listenOptions, () => {
+    log(`serving on port ${port}`);
+  });
 })();
