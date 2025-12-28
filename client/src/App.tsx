@@ -16,8 +16,12 @@ import Dashboard from "@/pages/Dashboard";
 import Forums from "@/pages/Forums";
 import Resources from "@/pages/Resources";
 import Clubs from "@/pages/Clubs";
-import Mentorship from "@/pages/Mentorship";
-import Discover from "@/pages/Discover";
+import ClubDetail from "@/pages/ClubDetail";
+// Mentorship removed
+import LostAndFound from "@/pages/LostAndFound";
+import Memes from "@/pages/Memes";
+import News from "@/pages/News";
+import ThreadRoom from "@/pages/ThreadRoom";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
@@ -27,9 +31,13 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/forums" component={Forums} />
       <Route path="/resources" component={Resources} />
+      <Route path="/clubs/:id" component={ClubDetail} />
       <Route path="/clubs" component={Clubs} />
-      <Route path="/mentorship" component={Mentorship} />
-      <Route path="/discover" component={Discover} />
+      {/* Mentorship route removed */}
+      <Route path="/lost-and-found" component={LostAndFound} />
+      <Route path="/memes" component={Memes} />
+      <Route path="/news" component={News} />
+      <Route path="/forums/thread/:id" component={ThreadRoom} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

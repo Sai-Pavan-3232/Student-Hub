@@ -4,6 +4,7 @@ import { CreateThreadDialog } from "@/components/CreateThreadDialog";
 import { CategoryTabs } from "@/components/CategoryTabs";
 import { TrendingTopics } from "@/components/TrendingTopics";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 // todo: remove mock functionality
 const mockThreads = [
@@ -80,6 +81,7 @@ const tabs = [
 export default function Forums() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [, navigate] = useLocation();
 
   const filteredThreads = mockThreads.filter((thread) => {
     const matchesSearch = thread.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,7 +121,7 @@ export default function Forums() {
                     <ThreadCard
                       key={thread.id}
                       {...thread}
-                      onClick={() => console.log("Thread clicked:", thread.id)}
+                      onClick={() => navigate(`/forums/thread/${thread.id}`)}
                     />
                   ))
                 ) : (

@@ -3,6 +3,7 @@ import { EventCard } from "@/components/EventCard";
 import { SearchBar } from "@/components/SearchBar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 // todo: remove mock functionality
 const mockClubs = [
@@ -39,14 +40,14 @@ const mockClubs = [
     name: "Rhapsody",
     description: "The music club .",
     membersCount: 178,
-    category: "Community Service",
+    category: "music",
   },
   {
     id: "6",
     name: "Bakasura The Foodie Club",
     description: "The Foodie Club.",
     membersCount: 145,
-    category: "Business",
+    category: "lifestyle",
   },
 ];
 
@@ -95,6 +96,7 @@ const mockEvents = [
 
 export default function Clubs() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [, setLocation] = useLocation();
 
   const filteredClubs = mockClubs.filter((club) =>
     club.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,7 +136,7 @@ export default function Clubs() {
                   key={club.id}
                   {...club}
                   onJoin={(id) => console.log("Join club:", id)}
-                  onView={(id) => console.log("View club:", id)}
+                  onView={(id) => setLocation(`/clubs/${id}`)}
                 />
               ))
             ) : (

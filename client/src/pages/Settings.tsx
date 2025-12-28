@@ -22,7 +22,6 @@ export default function Settings() {
     email: true,
     push: true,
     forumReplies: true,
-    mentorshipRequests: true,
     eventReminders: true,
   });
   const [privacy, setPrivacy] = useState({
@@ -185,21 +184,7 @@ export default function Settings() {
                 data-testid="switch-forum-replies"
               />
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Mentorship Requests</Label>
-                <p className="text-sm text-muted-foreground">Notifications about mentorship</p>
-              </div>
-              <Switch
-                checked={notifications.mentorshipRequests}
-                onCheckedChange={(checked) =>
-                  setNotifications({ ...notifications, mentorshipRequests: checked })
-                }
-                data-testid="switch-mentorship-requests"
-              />
-            </div>
-            <Separator />
+            
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Event Reminders</Label>

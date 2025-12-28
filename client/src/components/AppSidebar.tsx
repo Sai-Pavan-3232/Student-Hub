@@ -21,17 +21,22 @@ import {
   GraduationCap,
   Settings,
   LogOut,
+  Package,
+  Smile,
+  Newspaper,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 
 const mainNavItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Discover", url: "/discover", icon: Users },
   { title: "Forums", url: "/forums", icon: MessageSquare },
+  { title: "Lost & Found", url: "/lost-and-found", icon: Package },
+  { title: "Memes", url: "/memes", icon: Smile },
+  { title: "News", url: "/news", icon: Newspaper },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Clubs & Events", url: "/clubs", icon: Calendar },
-  { title: "Mentorship", url: "/mentorship", icon: GraduationCap },
+  // Mentorship removed
 ];
 
 const settingsItems = [
