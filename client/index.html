@@ -16,6 +16,30 @@
   <body>
     <div id="root"></div>
 
+    <script>
+      // DEV runtime overlay: surface first JS error to help debugging blank pages
+      window.addEventListener('error', function (e) {
+        const msg = 'JS Error: ' + (e.message || (e.error && e.error.message)) + ' at ' + (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || '');
+        console.error(msg, e.error || e);
+        const overlay = document.createElement('div');
+        overlay.style = 'position:fixed;left:0;right:0;top:0;background:#b91c1c;color:white;padding:12px;font-family:monospace;font-size:13px;z-index:99999;white-space:pre-wrap;';
+        overlay.textContent = msg;
+        document.body.appendChild(overlay);
+        try { alert(msg); } catch (err) {}
+      });
+
+      window.addEventListener('unhandledrejection', function (e) {
+        const reason = e.reason && (e.reason.message || e.reason.toString());
+        const msg = 'Unhandled promise rejection: ' + (reason || String(e.reason));
+        console.error(msg, e.reason);
+        const overlay = document.createElement('div');
+        overlay.style = 'position:fixed;left:0;right:0;top:0;background:#b91c1c;color:white;padding:12px;font-family:monospace;font-size:13px;z-index:99999;white-space:pre-wrap;';
+        overlay.textContent = msg;
+        document.body.appendChild(overlay);
+        try { alert(msg); } catch (err) {}
+      });
+    </script>
+
     <!-- Supabase environment bootstrap (recommended) -->
     <script type="module">
       // Preferred: read from Vite env variables (defined in .env.local as VITE_*).
