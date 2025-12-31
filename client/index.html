@@ -15,6 +15,28 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Supabase environment bootstrap (recommended) -->
+    <script type="module">
+      // Preferred: read from Vite env variables (defined in .env.local as VITE_*).
+      // These are available via import.meta.env in Vite-built modules.
+      // Fallback: read from window.* so vanilla scripts or legacy code can still work.
+      // Replace values in .env.local and restart the dev server when changing them.
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || window.SUPABASE_URL || '';
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || window.SUPABASE_KEY || '';
+
+      // Expose for non-module scripts that expect globals
+      window.SUPABASE_URL = SUPABASE_URL;
+      window.SUPABASE_KEY = SUPABASE_KEY;
+
+      if (!SUPABASE_URL || !SUPABASE_KEY) {
+        // Helpful warning during development
+        // In production, ensure env vars are set at build time and secrets are managed securely.
+        // See setup-env.md for where to get these values.
+        console.warn('Supabase configuration missing: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local');
+      }
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
