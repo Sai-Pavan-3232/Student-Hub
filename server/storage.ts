@@ -15,7 +15,7 @@ import {
   type Event, type InsertEvent,
   type Connection, type InsertConnection,
   type Todo, type InsertTodo,
-} from "@shared/schema";
+} from "../shared/schema";
 
 export interface IStorage {
   // Users

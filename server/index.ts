@@ -6,6 +6,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
+import { wsManager } from "./websocket";
 
 // Extend express-session types
 declare module "express-session" {
@@ -102,6 +103,10 @@ app.use((req, res, next) => {
 (async () => {
   try {
     await registerRoutes(httpServer, app);
+
+    // Initialize WebSocket server
+    wsManager.initialize(httpServer);
+    log('WebSocket server ready', 'websocket');
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;

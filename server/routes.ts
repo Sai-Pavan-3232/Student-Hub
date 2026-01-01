@@ -5,14 +5,19 @@ import {
   insertThreadSchema, insertReplySchema, insertResourceSchema,
   insertMentorProfileSchema, insertMentorshipRequestSchema, insertClubSchema,
   insertEventSchema, insertConnectionSchema, insertTodoSchema, insertUserSchema
-} from "@shared/schema";
+} from "../shared/schema";
 import { z } from "zod";
+import supabaseAdmin from './supabase';
+import { wsManager, createNotification } from './websocket';
+
+const ENABLE_ADMIN_ROUTES = process.env.ENABLE_ADMIN_ROUTES === 'true';
+
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
   // Session middleware - create anonymous user if not exists
   app.use(async (req, res, next) => {
     if (!req.session.userId) {
@@ -54,6 +59,33 @@ export async function registerRoutes(
     );
     res.json(threads);
   });
+
+  // Admin-only routes (disabled by default). Enable with `ENABLE_ADMIN_ROUTES=true` and provide SUPABASE_SERVICE_ROLE_KEY.
+  if (ENABLE_ADMIN_ROUTES) {
+    app.get('/api/admin/users', async (req, res) => {
+      if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase admin client not configured.' });
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 100 });
+        if (error) return res.status(500).json({ error: error.message });
+        res.json({ users: data });
+      } catch (err: any) {
+        res.status(500).json({ error: err?.message || String(err) });
+      }
+    });
+
+    app.get('/api/admin/stats', async (req, res) => {
+      // Example: combine Supabase admin info with local stats
+      if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase admin client not configured.' });
+      try {
+        const stats = await storage.getStats();
+        const { data, error } = await supabaseAdmin.functions.invoke('health-check').catch(() => ({ data: null, error: null }));
+        // We don't fail if function not present; just include what we can
+        res.json({ stats, remote: data || null });
+      } catch (err: any) {
+        res.status(500).json({ error: err?.message || String(err) });
+      }
+    });
+  }
 
   app.get("/api/threads/:id", async (req, res) => {
     const thread = await storage.getThread(req.params.id);
@@ -97,6 +129,27 @@ export async function registerRoutes(
       authorId: req.session.userId,
     });
     const reply = await storage.createReply(data);
+
+    // Send real-time notification to thread author
+    const thread = await storage.getThread(req.params.threadId);
+    if (thread && thread.authorId !== req.session.userId) {
+      const author = await storage.getUser(req.session.userId!);
+      const notification = createNotification(
+        'thread_reply',
+        thread.authorId,
+        'New Reply',
+        `${author?.displayName || 'Someone'} replied to your thread`,
+        {
+          threadId: thread.id,
+          threadTitle: thread.title,
+          replyId: reply.id,
+          authorId: req.session.userId!,
+          authorName: author?.displayName || 'Anonymous',
+        }
+      );
+      wsManager.sendNotificationToUser(thread.authorId, notification);
+    }
+
     res.json(reply);
   });
 
@@ -170,6 +223,26 @@ export async function registerRoutes(
       message: req.body.message,
     });
     const request = await storage.requestMentorship(data);
+
+    // Send real-time notification to mentor
+    const mentorProfile = await storage.getMentorProfile(req.params.id);
+    if (mentorProfile) {
+      const student = await storage.getUser(req.session.userId!);
+      const notification = createNotification(
+        'mentorship_request',
+        mentorProfile.userId,
+        'New Mentorship Request',
+        `${student?.displayName || 'A student'} requested mentorship`,
+        {
+          requestId: request.id,
+          studentId: req.session.userId!,
+          studentName: student?.displayName || 'Anonymous',
+          message: req.body.message,
+        }
+      );
+      wsManager.sendNotificationToUser(mentorProfile.userId, notification);
+    }
+
     res.json(request);
   });
 
@@ -177,7 +250,7 @@ export async function registerRoutes(
   app.get("/api/clubs", async (req, res) => {
     const { search } = req.query;
     const clubs = await storage.getClubs(search as string | undefined);
-    
+
     // Check membership status for each club
     const clubsWithStatus = await Promise.all(
       clubs.map(async (club) => ({
@@ -218,7 +291,7 @@ export async function registerRoutes(
   app.get("/api/events", async (req, res) => {
     const { search } = req.query;
     const events = await storage.getEvents(search as string | undefined);
-    
+
     // Check registration status for each event
     const eventsWithStatus = await Promise.all(
       events.map(async (event) => ({
@@ -273,12 +346,46 @@ export async function registerRoutes(
       targetId: req.body.targetId,
     });
     const connection = await storage.createConnection(data);
+
+    // Send real-time notification to target user
+    const requester = await storage.getUser(req.session.userId!);
+    const notification = createNotification(
+      'connection_request',
+      req.body.targetId,
+      'New Connection Request',
+      `${requester?.displayName || 'Someone'} wants to connect with you`,
+      {
+        requesterId: req.session.userId!,
+        requesterName: requester?.displayName || 'Anonymous',
+        connectionId: connection.id,
+      }
+    );
+    wsManager.sendNotificationToUser(req.body.targetId, notification);
+
     res.json(connection);
   });
 
   app.patch("/api/connections/:id", async (req, res) => {
     const { status } = z.object({ status: z.enum(["accepted", "declined"]) }).parse(req.body);
     const connection = await storage.updateConnectionStatus(req.params.id, status);
+
+    // Send notification if accepted
+    if (status === 'accepted' && connection) {
+      const accepter = await storage.getUser(req.session.userId!);
+      const notification = createNotification(
+        'connection_accepted',
+        connection.requesterId,
+        'Connection Accepted',
+        `${accepter?.displayName || 'Someone'} accepted your connection request`,
+        {
+          accepterId: req.session.userId!,
+          accepterName: accepter?.displayName || 'Anonymous',
+          connectionId: connection.id,
+        }
+      );
+      wsManager.sendNotificationToUser(connection.requesterId, notification);
+    }
+
     res.json(connection);
   });
 
